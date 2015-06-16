@@ -18,8 +18,7 @@ class Plane
 
   def takeoff(airport)
     fail 'Plane already flying' if self.flying?
-    self.is_inflight = true if airport.request_takeoff?(self)
+    self.is_inflight = true     if airport.request_takeoff?(self)
   end
-
 
 end

@@ -1,17 +1,17 @@
 require 'airport'
 
 describe Airport do
-  let (:plane) {Plane.new}
+  let (:plane) { double :plane, takeoff: nil, land: nil, flying?: true }
+
   before(:each) do
-    subject.stub check_weather: "Sunny"
+    allow(subject).to receive(:check_weather).and_return "Sunny" # avoid deprecated #stub syntax
   end
 
   describe 'take off' do
 
-    it {is_expected.to respond_to(:instruct_takeoff).with(1).argument}
+    it { is_expected.to respond_to(:instruct_takeoff).with(1).argument} # spaces after / before braces
 
     it 'instructs a plane to take off' do
-      plane.land(subject)
       subject.instruct_takeoff(plane)
       expect(plane).to be_flying
     end
@@ -34,20 +34,21 @@ describe Airport do
       end
 
     it "gives permission for planes to takeoff" do
-      plane.land(subject)
+      subject.request_land?(plane)
       expect(subject.request_takeoff?(plane)).to eq true
     end
 
     it 'instructs a plane to land' do
-    subject.instruct_land(plane)
-    expect(plane).not_to be_flying
-
+      # EXPECTATION ABOUT THE FUTURE
+      expect(plane).to receive :land
+      
+      # EXERCISE
+      subject.instruct_land(plane)
     end
 
     it 'receives a plane' do
       subject.instruct_land(plane)
-      expect(subject.planes[0]).to eq plane
-
+      expect(subject.planes.first).to eq plane
     end
 
   end
@@ -57,14 +58,13 @@ describe Airport do
     context 'when airport is full' do
 
       it 'does not allow a plane to land' do
-      subject.capacity.times { subject.planes << :plane }
-      expect { plane.land(subject) }.to raise_error "Airport full"
-
+        subject.capacity.times { subject.planes << double }
+        expect { subject.request_land?(plane) }.to raise_error "Airport full" # by convention, methods ending with ? don't have side-effects
       end
 
     end
 
-    it "when a plane lands and takes off it should be the same plane" do
+    it "when a plane lands and takes off it should be the same plane" do # This test is largely about Plane
       plane.land(subject)
       plane.takeoff(subject)
       expect(plane).to eq plane
@@ -78,10 +78,7 @@ describe Airport do
       end
 
       it "can return stormy or sunny" do
-        subject.stub check_weather: "Stormy"
-        expect(subject.check_weather).to eq "Stormy"
-        subject.stub check_weather: "Sunny"
-        expect(subject.check_weather).to eq "Sunny"
+        expect(["Stormy", "Sunny"]).to include subject.check_weather
       end
 
       it 'does not allow a plane to land if weather is stormy' do

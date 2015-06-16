@@ -1,10 +1,11 @@
 require 'plane'
 
 describe Plane do
-  let(:airport) {Airport.new}
+  let(:airport)  {Airport.new} # have a go at refactoring this with doubles
   let(:airport2) {Airport.new}
+
   before(:each) do
-    airport.stub check_weather: "Sunny"
+    airport.stub check_weather: "Sunny" # rewrite with #allow
     airport2.stub check_weather: "Sunny"
   end
 
@@ -14,6 +15,8 @@ describe Plane do
   it 'is flying when created' do
     expect(subject).to be_flying
   end
+
+  # consider a context block, #land
 
   it "request a landing from airport" do
     subject.land(airport)
@@ -34,30 +37,31 @@ describe Plane do
     expect { subject.land(airport) }.to raise_error "Plane already on ground"
   end
 
-  it 'cannot take off if it is already flying' do
-    expect { subject.takeoff(airport) }.to raise_error "Plane already flying"
+  describe '#takeoff' do
 
+    it 'raises error if plane is already flying' do
+      expect { subject.takeoff(airport) }.to raise_error "Plane already flying"
+    end # consider refactoring this block of take-off related methods
+
+    it 'cannot take off from an airport if it is landed at a different airport' do
+      subject.land(airport)
+      expect{subject.takeoff(airport2)}.to raise_error "Plane not at this airport"
+    end
+
+    it 'can take off' do
+      is_expected.to respond_to :takeoff
+    end
+
+    it 'requests a takeoff from an airport' do
+      subject.land(airport)
+      expect(subject.takeoff(airport)).to eq true
+
+    end
+
+    it 'is flying after take off' do
+      subject.land(airport)
+      subject.takeoff(airport)
+      expect(subject).to be_flying
+    end
   end
-
-  it 'cannot take off from an airport if it is landed at a different airport' do
-    subject.land(airport)
-    expect{subject.takeoff(airport2)}.to raise_error "Plane not at this airport"
-  end
-
-  it 'can take off' do
-    is_expected.to respond_to :takeoff
-  end
-
-  it 'requests a takeoff from an airport' do
-    subject.land(airport)
-    expect(subject.takeoff(airport)).to eq true
-
-  end
-
-  it 'is flying after take off' do
-    subject.land(airport)
-    subject.takeoff(airport)
-    expect(subject).to be_flying
-  end
-
 end
